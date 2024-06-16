@@ -1,3 +1,5 @@
-streamlit==1.15.0
-pandas==1.5.3
-kafka-python==2.0.2
+streamlit
+pandas
+confluent-kafka
+toml
+jsonschema
