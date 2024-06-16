@@ -1,4 +1,9 @@
 import streamlit as st
+
+# Disable Streamlit's file watcher
+st.set_option('server.fileWatcherType', 'none')
+
+# Rest of your Streamlit app code
 import pandas as pd
 from confluent_kafka import Producer, Consumer, KafkaError
 import json
