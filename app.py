@@ -6,11 +6,14 @@ import uuid
 
 # Kafka configuration
 KAFKA_TOPIC = "aml_alerts"
-KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
+KAFKA_BOOTSTRAP_SERVERS = "kafka:9092"  # Use service name if using Docker Compose
+
 
 # Initialize Kafka producer
-producer = KafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-                         value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+producer = KafkaProducer(
+    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+)
 
 # Function to send data to Kafka
 def send_to_kafka(data):
