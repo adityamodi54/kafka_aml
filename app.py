@@ -1,13 +1,12 @@
 import streamlit as st
 import pandas as pd
-from kafka import KafkaProducer, KafkaConsumer
+import altair as alt
+from kafka import KafkaProducer
 import json
 import uuid
 
 # Kafka configuration
-KAFKA_TOPIC = "aml_alerts"
-KAFKA_BOOTSTRAP_SERVERS = "kafka:9092"  # Use service name if using Docker Compose
-
+KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 
 # Initialize Kafka producer
 producer = KafkaProducer(
@@ -17,38 +16,28 @@ producer = KafkaProducer(
 
 # Function to send data to Kafka
 def send_to_kafka(data):
-    producer.send(KAFKA_TOPIC, data)
+    data["transaction_id"] = str(uuid.uuid4())  # Adding a unique transaction ID
+    producer.send('aml_alerts', value=data)
     producer.flush()
 
-# Streamlit app
-st.title("Real-time AML Alerts System")
+# Streamlit app interface
+st.title('AML Alerts')
 
-# File uploader
 uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-if uploaded_file:
+
+if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
-    st.write(df)
+    st.write("Data preview:")
+    st.write(df.head())
 
-    # Send data to Kafka
-    for index, row in df.iterrows():
-        transaction = row.to_dict()
-        transaction["transaction_id"] = str(uuid.uuid4())
-        send_to_kafka(transaction)
+    for _, row in df.iterrows():
+        send_to_kafka(row.to_dict())
+    
+    st.write("Data sent to Kafka!")
 
-# Kafka consumer setup
-consumer = KafkaConsumer(KAFKA_TOPIC,
-                         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-                         value_deserializer=lambda v: json.loads(v.decode('utf-8')),
-                         auto_offset_reset='earliest',
-                         enable_auto_commit=True,
-                         group_id='aml_alerts_group')
-
-st.header("Real-time Alerts")
-
-for message in consumer:
-    alert = message.value
-    if 'transaction_id' in alert:
-        st.json(alert)
-        st.button("Acknowledge", key=alert['transaction_id'])
-    else:
-        st.error("Error: 'transaction_id' not found in alert")
+    # Example of using Altair to create a chart
+    chart = alt.Chart(df).mark_bar().encode(
+        x='Merchant Name',
+        y='Available Balance'
+    )
+    st.altair_chart(chart, use_container_width=True)
